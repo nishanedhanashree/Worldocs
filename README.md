@@ -273,8 +273,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## 👨‍💻 Author
 
-**Jayesh** — [@jayesh5103](https://github.com/jayesh5103)
-
+**Dhanashree Nishane** 
 ---
 
 > Built as an MCA project to make document translation accessible across languages and scripts.
