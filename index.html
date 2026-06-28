@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worldocs – PDF Translator</title>
+  <meta name="description" content="Translate your PDF documents to 20+ languages instantly with Worldocs.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1.2">
+  <script src="config.js"></script>
+  <script>
+    if (!localStorage.getItem('access_token')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+  <style>
+    .lang-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .lang-row .select-wrapper { flex: 1; margin: 0; }
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef2ff;
+      color: var(--primary-dark);
+      border-radius: 50px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .file-chip .remove-file {
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .file-chip .remove-file:hover { opacity: 1; }
+
+    /* Session timeout banner */
+    #session-warning {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: linear-gradient(90deg,#f97316,#ef4444);
+      color: #fff;
+      text-align: center;
+      padding: 12px 20px;
+      font-size: 0.93rem;
+      font-weight: 600;
+      animation: slideDown 0.3s ease;
+      box-shadow: 0 4px 20px rgba(239,68,68,0.35);
+    }
+    #session-warning.show { display: block; }
+    #session-warning button {
+      margin-left: 14px;
+      background: rgba(255,255,255,0.25);
+      border: 1.5px solid rgba(255,255,255,0.6);
+      color: #fff;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      width: auto;
+      display: inline-block;
+      transition: background 0.2s;
+    }
+    #session-warning button:hover { background: rgba(255,255,255,0.4); }
+    @keyframes slideDown { from{transform:translateY(-100%)} to{transform:none} }
+
+    /* File-type error */
+    .file-type-error {
+      display: none;
+      margin-bottom: 14px;
+      padding: 12px 16px;
+      background: #fff1f2;
+      border: 1.5px solid #fecdd3;
+      border-radius: 10px;
+      color: #9f1239;
+      font-weight: 600;
+      font-size: 0.9rem;
+      animation: shake 0.4s ease;
+    }
+    /* Failed translation card */
+    .fail-card {
+      display: none;
+      margin-top: 18px;
+      padding: 18px 20px;
+      background: #fff1f2;
+      border: 1.5px solid #fecdd3;
+      border-radius: var(--radius-sm);
+      color: #9f1239;
+    }
+    .fail-card h4 { margin: 0 0 6px; font-size: 1rem; }
+    .fail-card p  { margin: 0; font-size: 0.87rem; color: #be123c; }
+    .fail-card .retry-btn {
+      margin-top: 12px;
+      background: linear-gradient(135deg,#ef4444,#dc2626);
+      color:#fff; border:none; border-radius:8px;
+      padding:8px 20px; font-weight:700; font-size:0.88rem;
+      cursor:pointer; width:auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container wide">
+    <!-- Header -->
+    <div class="page-header">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <!-- 3D Earth Globe -->
+        <div class="earth-wrap" style="width:56px; height:56px; flex-shrink:0;">
+          <svg class="globe-svg" style="width:56px;height:56px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="idx-ocean" cx="38%" cy="32%" r="65%">
+                <stop offset="0%"   stop-color="#93c5fd"/>
+                <stop offset="30%"  stop-color="#3b82f6"/>
+                <stop offset="70%"  stop-color="#1d4ed8"/>
+                <stop offset="100%" stop-color="#1e3a8a"/>
+              </radialGradient>
+              <radialGradient id="idx-shine" cx="32%" cy="28%" r="55%">
+                <stop offset="0%"   stop-color="rgba(255,255,255,0.38)"/>
+                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+              </radialGradient>
+              <clipPath id="idx-clip"><circle cx="50" cy="50" r="44"/></clipPath>
+            </defs>
+            <circle cx="50" cy="50" r="44" fill="url(#idx-ocean)"/>
+            <g class="globe-rotate" clip-path="url(#idx-clip)">
+              <path d="M54,32 L60,29 L64,36 L63,47 L57,57 L51,61 L48,54 L50,42 Z" fill="#4ade80" opacity="0.82"/>
+              <path d="M47,22 L55,19 L58,27 L52,31 L46,28 Z" fill="#4ade80" opacity="0.82"/>
+              <path d="M60,16 L78,20 L80,34 L72,41 L63,36 L59,28 Z" fill="#4ade80" opacity="0.82"/>
+              <path d="M18,24 L29,20 L31,33 L27,50 L20,57 L15,46 L14,33 Z" fill="#4ade80" opacity="0.82"/>
+              <path d="M22,60 L27,58 L26,72 L20,78 L16,70 Z" fill="#4ade80" opacity="0.8"/>
+              <path d="M72,58 L80,56 L81,63 L74,66 Z" fill="#4ade80" opacity="0.78"/>
+              <ellipse cx="50" cy="33" rx="44" ry="11" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
+              <ellipse cx="50" cy="50" rx="44" ry="16" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
+              <ellipse cx="50" cy="67" rx="44" ry="11" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
+              <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(255,255,255,0.18)" stroke-width="0.6"/>
+              <ellipse cx="50" cy="50" rx="22" ry="44" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.6"/>
+              <ellipse cx="50" cy="50" rx="38" ry="44" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.6"/>
+            </g>
+            <circle cx="50" cy="50" r="44" fill="url(#idx-shine)"/>
+            <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,30,0.22)" stroke-width="2.5"/>
+          </svg>
+          <div class="globe-orbit">
+            <div class="orbit-dot"></div>
+            <div class="orbit-dot"></div>
+            <div class="orbit-dot"></div>
+          </div>
+        </div>
+        <div>
+          <h1 style="margin:0;">Worldocs</h1>
+          <p class="subtitle" style="margin:0; font-size:0.82rem;">PDF Translation Platform</p>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="dashboard.html" class="nav-btn" data-tooltip="View history">
+          &#128202; Dashboard
+        </a>
+        <a href="#" onclick="logout()" class="nav-btn danger" data-tooltip="Sign out">
+          &#128682; Logout
+        </a>
+      </div>
+    </div>
+
+    <!-- Session Timeout Warning Banner -->
+    <div id="session-warning">
+      ⏰ Your session expires in <strong id="session-countdown">5:00</strong> due to inactivity.
+      <button onclick="resetSessionTimer()">Stay Logged In</button>
+      <button onclick="logout()" style="background:rgba(0,0,0,0.2);">Logout Now</button>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="drop-area" id="dropArea">
+      <div class="drop-icon">&#128196;</div>
+      <div class="drop-label" id="dropLabel">Drag &amp; Drop your PDF or DOCX here</div>
+      <div class="drop-sub">or click to browse files &nbsp;·&nbsp; PDF &amp; DOCX supported</div>
+    </div>
+    <input type="file" id="pdfFile" accept=".pdf,.docx" hidden>
+
+    <!-- File-type error -->
+    <div class="file-type-error" id="fileTypeError">
+      ⛔ Only PDF (.pdf) and Word (.docx) files are supported. Please select a valid file.
+    </div>
+
+    <!-- File chosen chip -->
+    <div id="fileChip" style="display:none; margin-bottom: 16px;">
+      <span class="file-chip">
+        &#128206; <span id="fileChipName"></span>
+        <span class="remove-file" onclick="removeFile()" title="Remove file">&#10005;</span>
+      </span>
+    </div>
+
+    <!-- Language Selector -->
+    <div class="select-wrapper">
+      <label class="select-label">&#127760; Translate To</label>
+      <select id="language">
+        <optgroup label="Indo-Aryan / Dravidian">
+          <option value="en">🇬🇧 English</option>
+          <option value="hi">🇮🇳 Hindi</option>
+          <option value="mr">🇮🇳 Marathi</option>
+          <option value="bn">🇧🇩 Bengali</option>
+          <option value="gu">🇮🇳 Gujarati</option>
+          <option value="pa">🇮🇳 Punjabi</option>
+          <option value="ta">🇮🇳 Tamil</option>
+          <option value="te">🇮🇳 Telugu</option>
+          <option value="kn">🇮🇳 Kannada</option>
+          <option value="ml">🇮🇳 Malayalam</option>
+          <option value="ur">🇵🇰 Urdu</option>
+        </optgroup>
+        <optgroup label="European">
+          <option value="fr">🇫🇷 French</option>
+          <option value="es">🇪🇸 Spanish</option>
+          <option value="de">🇩🇪 German</option>
+          <option value="pt">🇵🇹 Portuguese</option>
+          <option value="it">🇮🇹 Italian</option>
+          <option value="nl">🇳🇱 Dutch</option>
+          <option value="ru">🇷🇺 Russian</option>
+        </optgroup>
+        <optgroup label="Middle East">
+          <option value="ar">🇸🇦 Arabic</option>
+        </optgroup>
+        <optgroup label="East Asian">
+          <option value="zh-CN">🇨🇳 Chinese (Simplified)</option>
+          <option value="ja">🇯🇵 Japanese</option>
+          <option value="ko">🇰🇷 Korean</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <!-- Translate Button -->
+    <button id="translateBtn" onclick="uploadPDF()">
+      &#10024; Translate Document
+    </button>
+
+    <!-- File Warning -->
+    <div id="fileWarning" style="display:none; margin-top:14px; padding:12px 16px; background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; color:#9a3412; font-weight:500; font-size:0.92rem; align-items:center; gap:10px; animation: shake 0.4s ease;">
+      &#9888;&#65039; Please select a PDF or DOCX file before clicking Translate.
+    </div>
+
+    <!-- Progress Loader -->
+    <div id="loader" style="display:none; margin-top:22px; padding:20px; background:var(--bg); border-radius:var(--radius-sm); border:1.5px solid var(--border);">
+      <p style="font-weight:700; color:var(--primary-dark); margin-bottom:12px; font-size:0.95rem;">
+        <span style="animation: pulse 1s ease-in-out infinite; display:inline-block;">&#9203;</span> Translating your document&hellip;
+      </p>
+      <div class="progress-track">
+        <div id="progressBar"></div>
+      </div>
+      <p id="percent" style="color:var(--primary); font-weight:700; font-size:1rem; margin-top:8px;">0%</p>
+    </div>
+
+    <!-- Failure Card -->
+    <div class="fail-card" id="failCard">
+      <h4>❌ Translation Failed</h4>
+      <p id="failMsg">An error occurred while translating your document. Please check the file and try again.</p>
+      <button class="retry-btn" onclick="resetForRetry()">🔄 Try Again</button>
+    </div>
+
+    <!-- Status -->
+    <p id="status"></p>
+
+    <!-- Help & Feedback -->
+    <div class="help-section">
+      <div class="help-icon">&#128172;</div>
+      <h3>Help &amp; Feedback</h3>
+      <p>Having trouble or want to share feedback? We'd love to hear from you!</p>
+      <a href="mailto:Worldocs2026@gmail.com?subject=Worldocs%20Feedback" class="help-email-btn">
+        &#9993; Worldocs2026@gmail.com
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const API = window.API_CONFIG.API_URL;
+    const userToken = localStorage.getItem('access_token');
+
+    // ── Session Idle Timeout (30 min) ──────────────────────────────────────
+    const SESSION_TIMEOUT_MS  = 30 * 60 * 1000;  // 30 minutes
+    const SESSION_WARN_BEFORE = 5  * 60 * 1000;  // warn 5 mins before
+    let _sessionTimer, _warnTimer, _warnCountdown;
+
+    function resetSessionTimer() {
+      clearTimeout(_sessionTimer);
+      clearTimeout(_warnTimer);
+      clearInterval(_warnCountdown);
+      document.getElementById('session-warning').classList.remove('show');
+
+      // Schedule warning at 25 min
+      _warnTimer = setTimeout(() => showSessionWarning(), SESSION_TIMEOUT_MS - SESSION_WARN_BEFORE);
+      // Schedule logout at 30 min
+      _sessionTimer = setTimeout(() => { logout(); }, SESSION_TIMEOUT_MS);
+    }
+
+    function showSessionWarning() {
+      const banner = document.getElementById('session-warning');
+      banner.classList.add('show');
+      let secs = (SESSION_WARN_BEFORE / 1000);
+      const el = document.getElementById('session-countdown');
+      el.textContent = fmt(secs);
+      _warnCountdown = setInterval(() => {
+        secs--;
+        el.textContent = fmt(secs);
+        if (secs <= 0) { clearInterval(_warnCountdown); logout(); }
+      }, 1000);
+    }
+
+    function fmt(s) {
+      const m = Math.floor(s / 60), r = Math.floor(s % 60);
+      return `${m}:${String(r).padStart(2,'0')}`;
+    }
+
+    // Reset timer on any user activity
+    ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
+      document.addEventListener(ev, resetSessionTimer, { passive: true })
+    );
+    resetSessionTimer(); // kick off on load
+
+    function logout() {
+      localStorage.removeItem('access_token');
+      window.location.href = 'login.html';
+    }
+
+    // ── File handling ──────────────────────────────────────────────────────
+    const ALLOWED_EXTS = ['.pdf', '.docx'];
+
+    const dropArea     = document.getElementById('dropArea');
+    const fileInput    = document.getElementById('pdfFile');
+    const dropLabel    = document.getElementById('dropLabel');
+    const fileChip     = document.getElementById('fileChip');
+    const fileChipName = document.getElementById('fileChipName');
+
+    dropArea.addEventListener('click', () => fileInput.click());
+    dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('dragging'); });
+    dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragging'));
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('dragging');
+      fileInput.files = e.dataTransfer.files;
+      handleFileSelected();
+    });
+    fileInput.addEventListener('change', handleFileSelected);
+
+    function isAllowedFile(file) {
+      if (!file) return false;
+      const name = (file.name || '').toLowerCase();
+      return ALLOWED_EXTS.some(ext => name.endsWith(ext));
+    }
+
+    function handleFileSelected() {
+      const file = fileInput.files[0];
+      const typeErr = document.getElementById('fileTypeError');
+      if (!file) return;
+
+      if (!isAllowedFile(file)) {
+        typeErr.style.display = 'block';
+        fileInput.value = '';
+        dropArea.classList.remove('has-file');
+        dropLabel.textContent = 'Drag & Drop your PDF or DOCX here';
+        fileChip.style.display = 'none';
+        return;
+      }
+      typeErr.style.display = 'none';
+      dropArea.classList.add('has-file');
+      const icon = file.name.endsWith('.docx') ? '📝' : '📄';
+      dropLabel.textContent = '✅ File ready!';
+      fileChipName.textContent = file.name;
+      fileChip.style.display = 'block';
+      document.getElementById('fileWarning').style.display = 'none';
+      document.getElementById('failCard').style.display = 'none';
+    }
+
+    function removeFile() {
+      fileInput.value = '';
+      dropArea.classList.remove('has-file');
+      dropLabel.textContent = 'Drag & Drop your PDF or DOCX here';
+      fileChip.style.display = 'none';
+      document.getElementById('fileTypeError').style.display = 'none';
+    }
+
+    function resetForRetry() {
+      document.getElementById('failCard').style.display = 'none';
+      document.getElementById('status').textContent = '';
+      const btn = document.getElementById('translateBtn');
+      btn.disabled = false;
+      btn.innerHTML = '&#10024; Translate Document';
+      removeFile();
+    }
+
+    // ── Upload & Translate ─────────────────────────────────────────────────
+    async function uploadPDF() {
+      const statusEl = document.getElementById('status');
+      const loader   = document.getElementById('loader');
+      const bar      = document.getElementById('progressBar');
+      const percent  = document.getElementById('percent');
+      const warning  = document.getElementById('fileWarning');
+      const failCard = document.getElementById('failCard');
+      const failMsg  = document.getElementById('failMsg');
+      const btn      = document.getElementById('translateBtn');
+
+      failCard.style.display = 'none';
+      statusEl.textContent   = '';
+
+      if (fileInput.files.length === 0) {
+        warning.style.display = 'flex';
+        dropArea.style.borderColor = '#f97316';
+        setTimeout(() => { dropArea.style.borderColor = ''; }, 1600);
+        return;
+      }
+
+      const chosenFile = fileInput.files[0];
+      if (!isAllowedFile(chosenFile)) {
+        document.getElementById('fileTypeError').style.display = 'block';
+        return;
+      }
+
+      warning.style.display   = 'none';
+      loader.style.display    = 'block';
+      btn.disabled            = true;
+      btn.textContent         = '⏳ Uploading…';
+
+      const formData = new FormData();
+      formData.append('file', chosenFile);
+      formData.append('language', document.getElementById('language').value);
+
+      function showFail(msg) {
+        loader.style.display = 'none';
+        btn.disabled = false;
+        btn.innerHTML = '&#10024; Translate Document';
+        failMsg.textContent = msg || 'An unexpected error occurred. Please try again.';
+        failCard.style.display = 'block';
+      }
+
+      try {
+        const response = await fetch(`${API}/translate`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${userToken}` },
+          body: formData
+        });
+        if (response.status === 401) { logout(); return; }
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          showFail('❌ ' + (errData.detail || 'Upload rejected by server.'));
+          return;
+        }
+
+        const data        = await response.json();
+        const taskId      = data.task_id;
+        const downloadUrl = data.download_url;
+
+        btn.textContent = '🔄 Translating…';
+
+        const socket = new WebSocket(`${window.API_CONFIG.WS_URL}/progress/${taskId}`);
+        socket.onmessage = function (event) {
+          const msg = JSON.parse(event.data);
+          if (msg.progress < 0) {
+            socket.close();
+            showFail('❌ Translation failed on the server. The document may be corrupted, password-protected, or too complex. Please try a different file.');
+            return;
+          }
+          bar.style.width    = msg.progress + '%';
+          percent.textContent = msg.progress + '%';
+          if (msg.progress >= 100) {
+            statusEl.textContent = '🎉 Translation complete! Download starting…';
+            statusEl.className   = 'success';
+            btn.innerHTML = '✅ Done!';
+            window.location.href = downloadUrl;
+            socket.close();
+          }
+        };
+        socket.onerror = function() {
+          showFail('❌ Lost connection to server. Please refresh the page and try again.');
+        };
+      } catch (err) {
+        showFail('❌ Network error. Please check your connection and try again.');
+      }
+    }
+  </script>
+</body>
+</html>

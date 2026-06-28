@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel – Worldocs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1.2">
+  <style>
+    body { padding-top: 5vh; }
+    .page-header h1 { color: #1e1b4b; display: flex; align-items: center; gap: 8px; }
+    
+    /* Login Modal Overlay */
+    #admin-login-overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+    }
+    .login-box {
+      max-width: 380px; width: 100%;
+      background: #fff; padding: 40px 30px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .login-box input {
+      width: 100%; padding: 12px; margin: 16px 0;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 10px; font-family: 'Outfit';
+      outline: none; box-sizing: border-box; text-align: center;
+      letter-spacing: 2px;
+    }
+    .login-box input:focus { border-color: var(--primary); }
+    .login-box button {
+      width: 100%; padding: 12px;
+      background: var(--primary); color: #fff;
+      font-weight: 700; border: none; border-radius: 10px;
+      cursor: pointer;
+    }
+
+    /* Admin UI */
+    #admin-content { display: none; width: 100%; max-width: 1000px; margin: 0 auto; }
+    
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff; padding: 20px;
+      border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+      text-align: center; box-shadow: var(--shadow-sm);
+    }
+    .stat-val { font-size: 2rem; font-weight: 800; color: var(--primary); line-height: 1; margin-bottom: 4px; }
+    .stat-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+    .table-wrap {
+      overflow-x: auto; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border); box-shadow: var(--shadow);
+      background: #fff;
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    th { background: #f8fafc; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+    tbody tr:hover { background: #f1f5f9; }
+    
+    .search-input {
+      width: 100%; padding: 12px 18px; margin-bottom: 16px;
+      border: 1.5px solid var(--border-strong); border-radius: 50px;
+      font-family: 'Outfit'; font-size: 0.95rem; box-sizing: border-box;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--primary); }
+  </style>
+</head>
+<body>
+
+  <!-- Secret Login -->
+  <div id="admin-login-overlay">
+    <div class="login-box">
+      <h2>🛡️ Admin Portal</h2>
+      <p style="font-size:0.9rem; color:var(--text-soft); margin-top:8px;">Enter the Master Secret to access user data.</p>
+      <input type="password" id="admin-secret" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')loginAdmin()">
+      <button onclick="loginAdmin()" id="login-btn">Authenticate</button>
+      <div id="login-err" style="color:#ef4444; font-size:0.85rem; margin-top:12px; display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="admin-content">
+    <div class="page-header" style="margin-bottom:24px;">
+      <div>
+        <h1>🛡️ Master Admin</h1>
+        <p class="subtitle" style="margin:0; font-size:0.85rem;">System overview and user data</p>
+      </div>
+      <div>
+        <a href="dashboard.html" class="nav-btn" style="background:#fff; color:var(--text); border:1.5px solid var(--border-strong);">← Back to App</a>
+        <button onclick="logoutAdmin()" class="nav-btn danger" style="margin-left:8px;">Lock 🔒</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="stats">
+      <div class="stat-card"><div class="stat-val" id="s-users">-</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-total">-</div><div class="stat-label">Total Jobs</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#10b981;" id="s-done">-</div><div class="stat-label">Completed</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:#ef4444;" id="s-fail">-</div><div class="stat-label">Failed</div></div>
+    </div>
+
+    <!-- Users Table -->
+    <h3 style="margin-bottom:12px; font-weight:600; color:var(--text);">Registered Users</h3>
+    <input type="text" class="search-input" id="search" placeholder="🔍 Search users by name or email..." oninput="renderUsers()">
+    
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Translations</th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API = (window.location.origin && window.location.origin !== 'null') ? window.location.origin : 'http://127.0.0.1:8000';
+    let adminSecret = sessionStorage.getItem('admin_secret');
+    let allUsers = [];
+
+    // Init
+    if (adminSecret) { showDashboard(); }
+
+    async function loginAdmin() {
+      const secret = document.getElementById('admin-secret').value.trim();
+      const errEl = document.getElementById('login-err');
+      const btn = document.getElementById('login-btn');
+      
+      if (!secret) return;
+      btn.textContent = 'Verifying...';
+      
+      try {
+        const res = await fetch(`${API}/admin/stats`, { headers: { 'x-admin-secret': secret } });
+        if (!res.ok) throw new Error('Invalid Secret');
+        
+        sessionStorage.setItem('admin_secret', secret);
+        adminSecret = secret;
+        errEl.style.display = 'none';
+        showDashboard();
+      } catch (err) {
+        errEl.textContent = '❌ Invalid Master Secret';
+        errEl.style.display = 'block';
+        btn.textContent = 'Authenticate';
+      }
+    }
+
+    function logoutAdmin() {
+      sessionStorage.removeItem('admin_secret');
+      window.location.reload();
+    }
+
+    async function showDashboard() {
+      document.getElementById('admin-login-overlay').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'block';
+      await loadData();
+    }
+
+    async function loadData() {
+      try {
+        const headers = { 'x-admin-secret': adminSecret };
+        const [resStats, resUsers] = await Promise.all([
+          fetch(`${API}/admin/stats`, { headers }),
+          fetch(`${API}/admin/users`, { headers })
+        ]);
+        
+        if (resStats.status === 403) return logoutAdmin();
+
+        const stats = await resStats.json();
+        allUsers = await resUsers.json();
+
+        // Update Stats
+        document.getElementById('s-users').textContent = stats.users;
+        document.getElementById('s-total').textContent = stats.translations_total;
+        document.getElementById('s-done').textContent  = stats.translations_completed;
+        document.getElementById('s-fail').textContent  = stats.translations_failed;
+
+        renderUsers();
+      } catch (e) {
+        console.error("Failed to load admin data", e);
+      }
+    }
+
+    function renderUsers() {
+      const q = document.getElementById('search').value.toLowerCase();
+      const tbody = document.getElementById('users-tbody');
+      
+      const filtered = allUsers.filter(u => 
+        (u.username && u.username.toLowerCase().includes(q)) || 
+        (u.email && u.email.toLowerCase().includes(q))
+      );
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px;">No users found matching your search.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(u => `
+        <tr>
+          <td style="color:var(--text-muted); font-weight:600;">#${u.id}</td>
+          <td style="font-weight:700;">${u.username}</td>
+          <td>${u.email || '<span style="color:#9ca3af; font-style:italic;">None</span>'}</td>
+          <td><strong style="color:var(--primary);">${u.task_count}</strong> files</td>
+        </tr>
+      `).join('');
+    }
+  </script>
+</body>
+</html>

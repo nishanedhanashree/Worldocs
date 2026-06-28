@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – Worldocs</title>
+  <meta name="description" content="Sign in or register to Worldocs PDF Translation Platform.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1.2">
+  <script src="config.js"></script>
+  <style>
+    .pw-toggle {
+      position: relative;
+    }
+
+    .pw-toggle input {
+      padding-right: 44px;
+    }
+
+    .pw-eye {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
+      user-select: none;
+    }
+
+    .pw-eye:hover {
+      color: var(--primary);
+    }
+
+    .strength-bar {
+      height: 4px;
+      border-radius: 2px;
+      margin-top: 6px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .strength-fill {
+      height: 100%;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.3s, background 0.3s;
+    }
+
+    .logo-area {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo-area .logo-icon {
+      font-size: 2.8rem;
+      display: block;
+      animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes bounceIn {
+      from {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .divider {
+      text-align: center;
+      margin: 18px 0 14px;
+      color: var(--text-soft);
+      font-size: 0.82rem;
+      position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 38%;
+      height: 1px;
+      background: var(--border-strong);
+    }
+
+    .divider::before {
+      left: 0;
+    }
+
+    .divider::after {
+      right: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container" style="max-width:420px;">
+    <div class="logo-area">
+      <!-- 3D Earth Globe Icon -->
+      <div class="earth-wrap" style="margin: 0 auto 12px;">
+        <svg class="globe-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="lg-ocean" cx="38%" cy="32%" r="65%">
+              <stop offset="0%" stop-color="#93c5fd" />
+              <stop offset="30%" stop-color="#3b82f6" />
+              <stop offset="70%" stop-color="#1d4ed8" />
+              <stop offset="100%" stop-color="#1e3a8a" />
+            </radialGradient>
+            <radialGradient id="lg-shine" cx="32%" cy="28%" r="55%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.38)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+            </radialGradient>
+            <clipPath id="lg-clip">
+              <circle cx="50" cy="50" r="44" />
+            </clipPath>
+          </defs>
+          <!-- Ocean base -->
+          <circle cx="50" cy="50" r="44" fill="url(#lg-ocean)" />
+          <!-- Spinning continents + grid -->
+          <g class="globe-rotate" clip-path="url(#lg-clip)">
+            <!-- Africa -->
+            <path d="M54,32 L60,29 L64,36 L63,47 L57,57 L51,61 L48,54 L50,42 Z" fill="#4ade80" opacity="0.82" />
+            <!-- Europe -->
+            <path d="M47,22 L55,19 L58,27 L52,31 L46,28 Z" fill="#4ade80" opacity="0.82" />
+            <!-- Asia -->
+            <path d="M60,16 L78,20 L80,34 L72,41 L63,36 L59,28 Z" fill="#4ade80" opacity="0.82" />
+            <!-- America (N+S) -->
+            <path d="M18,24 L29,20 L31,33 L27,50 L20,57 L15,46 L14,33 Z" fill="#4ade80" opacity="0.82" />
+            <path d="M22,60 L27,58 L26,72 L20,78 L16,70 Z" fill="#4ade80" opacity="0.8" />
+            <!-- Oceania -->
+            <path d="M72,58 L80,56 L81,63 L74,66 Z" fill="#4ade80" opacity="0.78" />
+            <!-- Latitude lines -->
+            <ellipse cx="50" cy="33" rx="44" ry="11" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6" />
+            <ellipse cx="50" cy="50" rx="44" ry="16" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6" />
+            <ellipse cx="50" cy="67" rx="44" ry="11" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.6" />
+            <!-- Longitude lines -->
+            <line x1="50" y1="6" x2="50" y2="94" stroke="rgba(255,255,255,0.18)" stroke-width="0.6" />
+            <ellipse cx="50" cy="50" rx="22" ry="44" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.6" />
+            <ellipse cx="50" cy="50" rx="38" ry="44" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.6" />
+          </g>
+          <!-- Shine / specular highlight -->
+          <circle cx="50" cy="50" r="44" fill="url(#lg-shine)" />
+          <!-- Rim shadow -->
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(0,0,30,0.22)" stroke-width="2.5" />
+        </svg>
+        <!-- Cloud-computing orbit ring with dots -->
+        <div class="globe-orbit">
+          <div class="orbit-dot"></div>
+          <div class="orbit-dot"></div>
+          <div class="orbit-dot"></div>
+        </div>
+      </div>
+      <h1 style="margin-bottom: 4px;">Welcome to Worldocs</h1>
+      <p class="subtitle">Sign in or create an account to translate PDFs.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" id="tab-login" onclick="switchTab('login')">🔑 Login</div>
+      <div class="tab" id="tab-register" onclick="switchTab('register')">📓 Register</div>
+    </div>
+
+    <!-- ── LOGIN FORM ── -->
+    <div id="form-login">
+      <div class="form-group">
+        <label>👤 Username</label>
+        <input type="text" id="login-username" placeholder="Enter your username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="margin:0;">🔒 Password</label>
+          <a href="reset-password.html"
+            style="font-size:0.8rem; color:var(--primary); text-decoration:none; font-weight:600;">Forgot?</a>
+        </div>
+        <div class="pw-toggle">
+          <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password">
+          <span class="pw-eye" onclick="togglePw('login-password', this)">👁</span>
+        </div>
+      </div>
+      <button onclick="handleLogin()" id="loginBtn">🔑 Sign In</button>
+      <div id="login-error" class="error"></div>
+
+      <!-- Forgot Username -->
+      <div style="margin-top:14px; text-align:center;">
+        <button type="button" onclick="toggleForgotUser()"
+          style="background:none; border:none; box-shadow:none; color:var(--primary); font-size:0.83rem; font-weight:600; cursor:pointer; padding:0; width:auto; text-decoration:underline; text-underline-offset:3px;">
+          Forgot your username?
+        </button>
+      </div>
+
+      <!-- Collapsible panel -->
+      <div id="forgot-user-panel"
+        style="max-height:0; overflow:hidden; transition:max-height 0.35s ease; margin-top:0;">
+        <div style="margin-top:14px; padding:16px; background:#eef2ff; border-radius:10px; border:1.5px solid #c7d2fe;">
+          <p style="font-size:0.83rem; color:var(--text-muted); margin-bottom:10px; font-weight:500;">
+            Enter the email address linked to your account and we'll remind you of your username.
+          </p>
+          <div class="form-group" style="margin-bottom:10px;">
+            <input type="email" id="fu-email" placeholder="Your account email">
+          </div>
+          <button onclick="handleForgotUsername()" id="fu-btn"
+            style="background:linear-gradient(135deg,#6366f1,#818cf8); font-size:0.88rem; padding:10px 18px; width:100%;">
+            📤 Send Username
+          </button>
+          <div id="fu-error" class="error" style="margin-top:8px;"></div>
+          <div id="fu-success" class="success" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REGISTER FORM ── -->
+    <div id="form-register" style="display:none;">
+      <div class="form-group">
+        <label>👤 Username</label>
+        <input type="text" id="reg-username" placeholder="Choose a username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>✉️ Email</label>
+        <input type="email" id="reg-email" placeholder="Enter your email" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>🔒 Password</label>
+        <div class="pw-toggle">
+          <input type="password" id="reg-password" placeholder="Choose a strong password" autocomplete="new-password"
+            oninput="updateStrength(this.value)">
+          <span class="pw-eye" onclick="togglePw('reg-password', this)">👁</span>
+        </div>
+        <div class="strength-bar">
+          <div class="strength-fill" id="strength-fill"></div>
+        </div>
+        <p id="strength-label" style="font-size:0.75rem; color:var(--text-soft); margin-top:3px;"></p>
+      </div>
+      <button onclick="handleRegister()" id="registerBtn">🚀 Create Account</button>
+      <div id="reg-error" class="error"></div>
+      <div id="reg-success" class="success"></div>
+    </div>
+
+    <!-- Help -->
+    <div class="help-section" style="margin-top:24px;">
+      <div class="help-icon">💬</div>
+      <h3>Need Help?</h3>
+      <p>Contact our support team for any issues with your account.</p>
+      <a href="mailto:Worldocs2026@gmail.com?subject=Worldocs%20Support" class="help-email-btn">✉️
+        Worldocs2026@gmail.com</a>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('access_token')) {
+      window.location.href = 'index.html';
+    }
+    const API = window.API_CONFIG.API_URL;
+    /* ── Tab switch ── */
+    function switchTab(tab) {
+      ['login', 'register'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+        document.getElementById(`form-${t}`).style.display = t === tab ? 'block' : 'none';
+      });
+    }
+
+    /* ── Password toggle ── */
+    function togglePw(id, icon) {
+      const inp = document.getElementById(id);
+      if (inp.type === 'password') {
+        inp.type = 'text'; icon.textContent = '🙈';
+      } else {
+        inp.type = 'password'; icon.textContent = '👁';
+      }
+    }
+
+    /* ── Password strength ── */
+    function updateStrength(val) {
+      const fill = document.getElementById('strength-fill');
+      const label = document.getElementById('strength-label');
+      let score = 0;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const configs = [
+        { w: '0%', bg: '#e5e7eb', lbl: '' },
+        { w: '25%', bg: '#ef4444', lbl: '🔴 Weak' },
+        { w: '50%', bg: '#f97316', lbl: '🟠 Fair' },
+        { w: '75%', bg: '#f59e0b', lbl: '🟡 Good' },
+        { w: '100%', bg: '#10b981', lbl: '🟢 Strong' },
+      ];
+      fill.style.width = configs[score].w;
+      fill.style.background = configs[score].bg;
+      label.textContent = configs[score].lbl;
+    }
+
+    /* ── Login ── */
+    async function handleLogin() {
+      const user = document.getElementById('login-username').value.trim();
+      const pass = document.getElementById('login-password').value;
+      const errDiv = document.getElementById('login-error');
+      const btn = document.getElementById('loginBtn');
+      errDiv.style.display = 'none';
+      if (!user || !pass) {
+        errDiv.textContent = 'Please fill in all fields.';
+        errDiv.style.display = 'block'; return;
+      }
+      btn.textContent = '⏳ Signing in…'; btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Invalid credentials');
+        localStorage.setItem('access_token', data.access_token);
+        btn.textContent = '✅ Logged in!';
+        setTimeout(() => window.location.href = 'index.html', 500);
+      } catch (err) {
+        errDiv.textContent = '❌ ' + err.message;
+        errDiv.style.display = 'block';
+        btn.textContent = '🔑 Sign In'; btn.disabled = false;
+      }
+    }
+
+    /* ── Register ── */
+    async function handleRegister() {
+      const user = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const pass = document.getElementById('reg-password').value;
+      const errDiv = document.getElementById('reg-error');
+      const sucDiv = document.getElementById('reg-success');
+      const btn = document.getElementById('registerBtn');
+      errDiv.style.display = sucDiv.style.display = 'none';
+      if (!user || !email || !pass) {
+        errDiv.textContent = 'Please fill in all fields.';
+        errDiv.style.display = 'block'; return;
+      }
+      btn.textContent = '⏳ Creating account…'; btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, email, password: pass })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Registration failed');
+        sucDiv.textContent = '🎉 Account created! Redirecting to login…';
+        sucDiv.style.display = 'block';
+        btn.textContent = '✅ Done!';
+        setTimeout(() => switchTab('login'), 1600);
+      } catch (err) {
+        errDiv.textContent = '❌ ' + err.message;
+        errDiv.style.display = 'block';
+        btn.textContent = '🚀 Create Account'; btn.disabled = false;
+      }
+    }
+
+    /* Enter key support */
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('form-login').style.display !== 'none') handleLogin();
+        else handleRegister();
+      }
+    });
+
+    /* ── Forgot Username ── */
+    let fuOpen = false;
+    function toggleForgotUser() {
+      const panel = document.getElementById('forgot-user-panel');
+      fuOpen = !fuOpen;
+      panel.style.maxHeight = fuOpen ? panel.scrollHeight + 400 + 'px' : '0';
+    }
+
+    async function handleForgotUsername() {
+      const email = document.getElementById('fu-email').value.trim();
+      const errDiv = document.getElementById('fu-error');
+      const sucDiv = document.getElementById('fu-success');
+      const btn = document.getElementById('fu-btn');
+      errDiv.style.display = sucDiv.style.display = 'none';
+
+      if (!email) {
+        errDiv.textContent = 'Please enter your email.';
+        errDiv.style.display = 'block'; return;
+      }
+      btn.textContent = '⏳ Sending…'; btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/forgot-username`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        sucDiv.textContent = '✅ ' + data.message;
+        sucDiv.style.display = 'block';
+        btn.textContent = '📤 Sent!';
+        btn.disabled = false;
+      } catch (err) {
+        errDiv.textContent = '❌ Connection error. Is the server running?';
+        errDiv.style.display = 'block';
+        btn.textContent = '📤 Send Username'; btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+
+</html>

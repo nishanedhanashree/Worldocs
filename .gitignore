@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+.venv/
+.venv-1/
+venv/
+env/
+
+# Environment secrets — NEVER commit this
+.env
+
+# Database
+worldocs.db
+
+# Generated PDFs
+*.pdf
+translated_*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build & deploy artifacts
+deployment.zip
+package/
+
+# Logs
+server.log
+*.log
+worldocs
+worldocs.pub
+

@@ -1,0 +1,39 @@
+# Core Web Framework
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+slowapi
+pydantic[email]
+pydantic-settings
+
+# Database & Auth
+SQLAlchemy
+psycopg2-binary
+bcrypt
+PyJWT
+passlib[bcrypt]
+
+# PDF Processing & Translation
+pdfplumber
+pypdf
+PyMuPDF
+fpdf2
+uharfbuzz
+fonttools
+deep-translator
+pytesseract
+Pillow
+python-docx
+
+# AWS & Storage
+boto3
+
+# Email & Utilities
+fastapi-mail
+aiofiles
+aiosmtplib
+requests
+httpx
+jinja2
+python-dateutil

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – Worldocs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1.2">
+  <script src="config.js"></script>
+  <style>
+    body { padding-top: 5vh; }
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .search-input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 50px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.92rem;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: all 0.22s;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+    .filter-btn {
+      padding: 9px 16px;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border: 1.5px solid var(--border-strong);
+      background: var(--bg);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      width: auto;
+      box-shadow: none;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .loading-spinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px;
+      gap: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border-strong);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Share modal */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,15,35,0.55);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(99,102,241,0.18);
+      padding: 32px 28px 24px;
+      width: 100%; max-width: 420px;
+      animation: modalIn 0.22s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes modalIn {
+      from { opacity:0; transform: translateY(20px) scale(0.97); }
+      to   { opacity:1; transform: none; }
+    }
+    .modal-title {
+      font-size: 1.15rem; font-weight: 700;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .modal-sub {
+      font-size: 0.84rem; color: var(--text-muted); margin-bottom: 20px;
+    }
+    .modal-input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: 10px;
+      font-family: 'Outfit', sans-serif; font-size: 0.95rem;
+      color: var(--text); background: var(--bg);
+      outline: none; box-sizing: border-box;
+      transition: all 0.2s; margin-bottom: 14px;
+    }
+    .modal-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-send-btn {
+      flex: 1; padding: 11px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff; font-weight: 700; font-size: 0.95rem;
+      border: none; border-radius: 10px; cursor: pointer;
+      transition: opacity 0.2s; width: auto;
+    }
+    .modal-send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .modal-cancel-btn {
+      padding: 11px 18px;
+      background: var(--bg);
+      border: 1.5px solid var(--border-strong);
+      color: var(--text-muted); font-weight: 600; font-size: 0.9rem;
+      border-radius: 10px; cursor: pointer;
+      transition: all 0.2s; width: auto;
+    }
+    .modal-cancel-btn:hover { border-color: var(--primary); color: var(--primary); }
+    #modal-msg { font-size: 0.84rem; margin-top: 10px; min-height: 18px; }
+    .share-btn {
+      display: inline-block;
+      padding: 5px 12px;
+      background: linear-gradient(135deg,#6366f1,#4f46e5);
+      color: #fff; font-size: 0.8rem; font-weight: 600;
+      border-radius: 8px; border: none; cursor: pointer;
+      text-decoration: none; margin-left: 36px;
+      transition: opacity 0.18s; width: auto;
+    }
+    .share-btn:hover { opacity: 0.85; }
+
+    /* Share modal — multi-platform */
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .platform-btn {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+      padding: 14px 6px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      cursor: pointer; font-size: 0.72rem; font-weight: 600;
+      color: var(--text-muted); transition: all 0.2s;
+      width: auto; box-shadow: none;
+    }
+    .platform-btn .p-icon { font-size: 1.7rem; line-height: 1; }
+    .platform-btn:hover   { border-color: var(--primary); color: var(--primary);
+                            background: #eef2ff; transform: translateY(-2px);
+                            box-shadow: 0 4px 14px rgba(99,102,241,0.14); }
+    .platform-btn.whatsapp:hover { border-color:#25d366; color:#25d366; background:#f0fdf4; }
+    .platform-btn.sms:hover      { border-color:#34aadc; color:#34aadc; background:#eff8ff; }
+    .platform-btn.copy:hover     { border-color:#f59e0b; color:#f59e0b; background:#fffbeb; }
+    .platform-btn.nativeshare:hover { border-color:#8b5cf6;color:#8b5cf6;background:#f5f3ff; }
+    .email-section {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      margin-top: 4px;
+      animation: fadeIn .18s ease;
+    }
+    .email-section.open { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; } }
+
+    /* Session timeout banner */
+    #session-warning {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+      background: linear-gradient(90deg,#f97316,#ef4444);
+      color: #fff;
+      text-align: center;
+      padding: 12px 20px;
+      font-size: 0.93rem;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(239,68,68,0.35);
+      animation: slideDown 0.3s ease;
+    }
+    #session-warning.show { display: block; }
+    #session-warning button {
+      margin-left: 14px;
+      background: rgba(255,255,255,0.25);
+      border: 1.5px solid rgba(255,255,255,0.6);
+      color: #fff;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      width: auto;
+      display: inline-block;
+      transition: background 0.2s;
+    }
+    #session-warning button:hover { background: rgba(255,255,255,0.4); }
+    @keyframes slideDown { from{transform:translateY(-100%)} to{transform:none} }
+  </style>
+</head>
+<body>
+  <!-- Session Timeout Warning Banner -->
+  <div id="session-warning">
+    ⏰ Your session expires in <strong id="session-countdown">5:00</strong> due to inactivity.
+    <button onclick="resetSessionTimer()">Stay Logged In</button>
+    <button onclick="logout()" style="background:rgba(0,0,0,0.2);">Logout Now</button>
+  </div>
+
+  <div class="container wide">
+    <div class="page-header">
+      <div>
+        <h1>📊 Dashboard</h1>
+        <p class="subtitle" style="margin:0; font-size:0.85rem;">Your translation history</p>
+      </div>
+      <div class="nav-links">
+        <a href="index.html" class="nav-btn" data-tooltip="Start a new translation">
+          ✨ New Translation
+        </a>
+        <a href="#" onclick="logout()" class="nav-btn danger" data-tooltip="Sign out">
+          🚪 Logout
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row" id="statsRow" style="display:none;">
+      <div class="stat-card">
+        <div class="stat-val" id="statTotal">–</div>
+        <div class="stat-label">Total</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statDone">–</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statFailed">–</div>
+        <div class="stat-label">Failed</div>
+      </div>
+    </div>
+
+    <!-- Search + Filter -->
+    <div class="search-row" id="searchRow" style="display:none;">
+      <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search by filename or language…" oninput="renderHistory()">
+      <button class="filter-btn active" id="filter-all" onclick="setFilter('all')">All</button>
+      <button class="filter-btn" id="filter-completed" onclick="setFilter('completed')">✅ Done</button>
+      <button class="filter-btn" id="filter-processing" onclick="setFilter('processing')">⏳ Working</button>
+      <button class="filter-btn" id="filter-failed" onclick="setFilter('failed')">❌ Failed</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <span>Loading your history…</span>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div id="history-content" style="display:none;"></div>
+
+    <!-- Help Section -->
+    <div class="help-section" style="margin-top:28px;">
+      <div class="help-icon">💬</div>
+      <h3>Help & Feedback</h3>
+      <p>Questions about your translations? Reach out to us anytime.</p>
+      <a href="mailto:Worldocs2026@gmail.com?subject=Worldocs%20Feedback"
+         class="help-email-btn">✉️ Worldocs2026@gmail.com</a>
+    </div>
+  </div>
+
+  <script>
+    let allTasks = [];
+    let currentFilter = 'all';
+
+    // ── Session Idle Timeout (30 min) ──────────────────────────────────
+    const SESSION_TIMEOUT_MS  = 30 * 60 * 1000;
+    const SESSION_WARN_BEFORE = 5  * 60 * 1000;
+    let _sessionTimer, _warnTimer, _warnCountdown;
+
+    function resetSessionTimer() {
+      clearTimeout(_sessionTimer);
+      clearTimeout(_warnTimer);
+      clearInterval(_warnCountdown);
+      document.getElementById('session-warning').classList.remove('show');
+      _warnTimer    = setTimeout(() => showSessionWarning(), SESSION_TIMEOUT_MS - SESSION_WARN_BEFORE);
+      _sessionTimer = setTimeout(() => logout(), SESSION_TIMEOUT_MS);
+    }
+
+    function showSessionWarning() {
+      document.getElementById('session-warning').classList.add('show');
+      let secs = SESSION_WARN_BEFORE / 1000;
+      const el = document.getElementById('session-countdown');
+      el.textContent = fmt(secs);
+      _warnCountdown = setInterval(() => {
+        secs--;
+        el.textContent = fmt(secs);
+        if (secs <= 0) { clearInterval(_warnCountdown); logout(); }
+      }, 1000);
+    }
+
+    function fmt(s) {
+      const m = Math.floor(s / 60), r = Math.floor(s % 60);
+      return `${m}:${String(r).padStart(2,'0')}`;
+    }
+
+    ['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
+      document.addEventListener(ev, resetSessionTimer, { passive: true })
+    );
+    resetSessionTimer();
+    // ─────────────────────────────────────────────────────────────────
+
+    const langMap = {
+      'en':'English','hi':'Hindi','mr':'Marathi','bn':'Bengali','gu':'Gujarati',
+      'pa':'Punjabi','ta':'Tamil','te':'Telugu','kn':'Kannada','ml':'Malayalam',
+      'ur':'Urdu','ar':'Arabic','fr':'French','es':'Spanish','de':'German',
+      'pt':'Portuguese','it':'Italian','nl':'Dutch','ru':'Russian',
+      'zh-CN':'Chinese (Simplified)','ja':'Japanese','ko':'Korean'
+    };
+    const flagMap = {
+      'en':'🇬🇧','hi':'🇮🇳','mr':'🇮🇳','bn':'🇧🇩','gu':'🇮🇳','pa':'🇮🇳',
+      'ta':'🇮🇳','te':'🇮🇳','kn':'🇮🇳','ml':'🇮🇳','ur':'🇵🇰','ar':'🇸🇦',
+      'fr':'🇫🇷','es':'🇪🇸','de':'🇩🇪','pt':'🇵🇹','it':'🇮🇹','nl':'🇳🇱',
+      'ru':'🇷🇺','zh-CN':'🇨🇳','ja':'🇯🇵','ko':'🇰🇷'
+    };
+
+    const API = window.API_CONFIG.API_URL;
+
+    function checkAuth() {
+      const token = localStorage.getItem('access_token');
+      if (!token) window.location.href = 'login.html';
+      return token;
+    }
+    function logout() {
+      localStorage.removeItem('access_token');
+      window.location.href = 'login.html';
+    }
+
+    function setFilter(f) {
+      currentFilter = f;
+      ['all','completed','processing','failed'].forEach(id => {
+        document.getElementById(`filter-${id}`).classList.toggle('active', id === f);
+      });
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+      const content = document.getElementById('history-content');
+
+      let tasks = allTasks;
+      if (currentFilter !== 'all') tasks = tasks.filter(t => t.status === currentFilter);
+      if (q) tasks = tasks.filter(t =>
+        (t.original_filename||'').toLowerCase().includes(q) ||
+        (langMap[t.target_language]||t.target_language||'').toLowerCase().includes(q)
+      );
+
+      if (tasks.length === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p style="font-size:1rem; font-weight:600; margin-bottom:8px;">No translations found</p>
+            <a href="index.html">Start your first translation →</a>
+          </div>`;
+        return;
+      }
+
+      let html = `<div class="table-wrap"><table>
+        <thead><tr>
+          <th>📄 File</th><th>🌍 Language</th><th>🕒 Date</th><th>Status</th><th>Action</th>
+        </tr></thead>
+        <tbody>`;
+
+      tasks.forEach(task => {
+        const date = new Date(task.created_at).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+        const time = new Date(task.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        const lang = (flagMap[task.target_language]||'') + ' ' + (langMap[task.target_language]||task.target_language);
+        let action = '<span style="color:var(--text-soft);">–</span>';
+        if (task.status === 'completed' && task.download_url) {
+          const escapedUrl  = encodeURIComponent(task.download_url);
+          const escapedName = encodeURIComponent(task.original_filename || 'translated.pdf');
+          action = `
+            <div style="display:flex; gap:8px; align-items:center;">
+              <a href="${task.download_url}" class="download-btn" target="_blank">⬇ Download</a>
+              <button class="share-btn" style="margin:0;" onclick="openShareModal('${escapedUrl}','${escapedName}')">✉️ Share</button>
+            </div>
+          `;
+        }
+        html += `<tr>
+          <td style="font-weight:600; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${task.original_filename}</td>
+          <td>${lang}</td>
+          <td style="color:var(--text-muted);">${date} <span style="font-size:0.78rem;">${time}</span></td>
+          <td><span class="status ${task.status}">${task.status.charAt(0).toUpperCase()+task.status.slice(1)}</span></td>
+          <td>${action}</td>
+        </tr>`;
+      });
+
+      html += '</tbody></table></div>';
+      content.innerHTML = html;
+    }
+
+    async function loadHistory() {
+      const token = checkAuth();
+      try {
+        const res = await fetch(`${API}/history`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) { logout(); return; }
+        allTasks = await res.json();
+
+        // Stats
+        document.getElementById('statTotal').textContent  = allTasks.length;
+        document.getElementById('statDone').textContent   = allTasks.filter(t=>t.status==='completed').length;
+        document.getElementById('statFailed').textContent = allTasks.filter(t=>t.status==='failed').length;
+        document.getElementById('statsRow').style.display = 'grid';
+        document.getElementById('searchRow').style.display = 'flex';
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('history-content').style.display = 'block';
+        renderHistory();
+      } catch (err) {
+        document.getElementById('loading').innerHTML =
+          '<div class="loading-spinner"><p>❌ Failed to load history.</p></div>';
+      }
+    }
+
+    loadHistory();
+
+    /* ── Share modal logic ───────────────────────────────── */
+    let _shareUrl = '', _shareFilename = '';
+
+    function openShareModal(encodedUrl, encodedName) {
+      _shareUrl      = decodeURIComponent(encodedUrl);
+      _shareFilename = decodeURIComponent(encodedName);
+      document.getElementById('modal-filename').textContent = _shareFilename;
+      document.getElementById('modal-email').value = '';
+      document.getElementById('modal-msg').textContent = '';
+      document.getElementById('modal-send-btn').textContent = '✉️ Send PDF';
+      document.getElementById('modal-send-btn').disabled = false;
+      document.getElementById('share-modal').classList.add('open');
+      setTimeout(() => document.getElementById('modal-email').focus(), 80);
+    }
+
+    function closeShareModal() {
+      document.getElementById('share-modal').classList.remove('open');
+    }
+
+    async function sendPdf() {
+      const email  = document.getElementById('modal-email').value.trim();
+      const msgEl  = document.getElementById('modal-msg');
+      const btn    = document.getElementById('modal-send-btn');
+      if (!email || !email.includes('@')) {
+        msgEl.style.color = '#ef4444';
+        msgEl.textContent = '❌ Please enter a valid email address.';
+        return;
+      }
+      btn.textContent = '⏳ Sending…'; btn.disabled = true;
+      msgEl.textContent = '';
+      try {
+        const token = localStorage.getItem('access_token');
+        const res = await fetch(`${API}/send-pdf`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            recipient_email: email,
+            download_url: _shareUrl,
+            filename: _shareFilename
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Failed');
+        msgEl.style.color = '#10b981';
+        msgEl.textContent = '✅ ' + data.message;
+        btn.textContent = '✅ Sent!';
+        setTimeout(closeShareModal, 2500);
+      } catch (err) {
+        msgEl.style.color = '#ef4444';
+        msgEl.textContent = '❌ ' + err.message;
+        btn.textContent = '✉️ Send Email'; btn.disabled = false;
+      }
+    }
+
+    /* ── Platform share handlers ───────────────── */
+    function shareWhatsApp() {
+      const text = encodeURIComponent(`📄 ${_shareFilename}\nDownload your translated PDF: ${_shareUrl}`);
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+
+    function shareSMS() {
+      const body = encodeURIComponent(`📄 ${_shareFilename} - Download: ${_shareUrl}`);
+      window.location.href = `sms:?body=${body}`;
+    }
+
+    async function shareNative() {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Worldocs – ${_shareFilename}`,
+            text: `Here is your translated document: ${_shareFilename}`,
+            url: _shareUrl
+          });
+        } catch (e) { /* user cancelled */ }
+      } else {
+        // Fallback: copy link
+        copyLink();
+      }
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(_shareUrl).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<span class="p-icon">✅</span><span>Copied!</span>';
+        btn.style.borderColor = '#10b981'; btn.style.color = '#10b981';
+        setTimeout(() => {
+          btn.innerHTML = '<span class="p-icon">🔗</span><span>Copy Link</span>';
+          btn.style.cssText = '';
+        }, 2000);
+      });
+    }
+
+    function toggleEmail() {
+      const sec = document.getElementById('email-section');
+      sec.classList.toggle('open');
+      if (sec.classList.contains('open')) {
+        document.getElementById('modal-email').focus();
+      }
+    }
+  </script>
+
+  <!-- Share Modal -->
+  <div class="modal-overlay" id="share-modal" onclick="if(event.target===this)closeShareModal()">
+    <div class="modal-box">
+      <div class="modal-title">📤 Share Translated PDF</div>
+      <div class="modal-sub" id="modal-sub">Choose how to share <strong id="modal-filename"></strong></div>
+
+      <!-- Platform grid -->
+      <div class="platform-grid">
+        <button class="platform-btn nativeshare" onclick="shareNative()" title="Share via device">
+          <span class="p-icon">📱</span><span>Share</span>
+        </button>
+        <button class="platform-btn whatsapp" onclick="shareWhatsApp()" title="Share on WhatsApp">
+          <span class="p-icon">💬</span><span>WhatsApp</span>
+        </button>
+        <button class="platform-btn sms" onclick="shareSMS()" title="Send via SMS / iMessage">
+          <span class="p-icon">✉️</span><span>iMessage</span>
+        </button>
+        <button class="platform-btn copy" id="copy-btn" onclick="copyLink()" title="Copy download link">
+          <span class="p-icon">🔗</span><span>Copy Link</span>
+        </button>
+      </div>
+
+      <!-- Email section (toggleable) -->
+      <button class="platform-btn" onclick="toggleEmail()"
+        style="width:100%;flex-direction:row;gap:10px;justify-content:center;margin-bottom:4px;">
+        <span class="p-icon" style="font-size:1.2rem;">📧</span>
+        <span style="font-size:0.88rem;">Send as Email Attachment</span>
+      </button>
+
+      <div class="email-section" id="email-section">
+        <input type="email" class="modal-input" id="modal-email"
+               placeholder="recipient@example.com"
+               onkeydown="if(event.key==='Enter')sendPdf()">
+        <div class="modal-actions">
+          <button class="modal-send-btn" id="modal-send-btn" onclick="sendPdf()">📧 Send Email</button>
+          <button class="modal-cancel-btn" onclick="closeShareModal()">Cancel</button>
+        </div>
+        <div id="modal-msg"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
